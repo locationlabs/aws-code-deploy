@@ -7,6 +7,8 @@ Automation tool for running an AWS CodeDeploy from the CLI. Supports:
  - Deploying a revision.
  - Watching revision status.
 
+[![Build Status](https://travis-ci.org/locationlabs/aws-code-deploy.png)](https://travis-ci.org/locationlabs/aws-code-deploy)
+
 
 ## Generating Revisions
 
