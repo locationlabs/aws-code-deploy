@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from argparse import ArgumentParser
+from argparse import ArgumentParser, FileType
 from logging import basicConfig, getLogger
 from os import environ
 
@@ -8,7 +8,7 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 
 from awscodedeploy.deploy import push, deploy
-from awscodedeploy.revision import Revision
+from awscodedeploy.revision import HelloWorldRevision, DockerComposeRevision
 from awscodedeploy.wait import wait_for_deploy
 
 
@@ -50,6 +50,20 @@ def parse_args():
         help="Name of the bucket to use; defaults to the Location Labs convention",
     )
     parser.add_argument(
+        "--etag",
+        help="Etag of the revision to use",
+    )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--hello-world", action="store_true")
+    group.add_argument("--docker-compose", type=FileType("r"))
+
+    parser.add_argument(
+        "--no-push",
+        action="store_true",
+        help="Skip the push step",
+    )
+    parser.add_argument(
         "--no-deploy",
         action="store_true",
         help="Skip the deploy step",
@@ -59,6 +73,7 @@ def parse_args():
         action="store_true",
         help="Skip the waitstep",
     )
+
     parser.add_argument(
         "--socket-timeout",
         type=float,
@@ -102,6 +117,17 @@ def initialize_logging(verbosity):
     getLogger("botocore").setLevel("DEBUG" if level == "DEBUG" else "WARN")
 
 
+def choose_revision(args):
+    if args.hello_world:
+        return HelloWorldRevision()
+    if args.docker_compose:
+        return DockerComposeRevision(
+            deployment_name=args.deployment_name,
+            compose_file=args.docker_compose,
+        )
+    raise Exception("Unsupported revision")
+
+
 def main():
     """
     CLI entry point.
@@ -110,8 +136,7 @@ def main():
     initialize_logging(args.verbose)
     logger = getLogger("cli")
 
-    revision = Revision()
-
+    revision = choose_revision(args)
     try:
         profile = get_profile(profile=args.profile)
 
@@ -120,14 +145,15 @@ def main():
             read_timeout=args.socket_timeout,
         ))
 
-        if not args.deployment_id:
-            etag = push(profile, args, revision)
-        else:
-            etag = None
+        # push the revision to S3
+        if not args.no_push and not args.deployment_id:
+            args.etag = push(profile, args, revision)
 
-        if not args.no_deploy and etag:
-            args.deployment_id = deploy(profile, client, args, etag)
+        # deploy from the revision
+        if not args.no_deploy and args.etag:
+            args.deployment_id = deploy(profile, client, args)
 
+        # wait for the deploy to finish
         if not args.no_wait and args.deployment_id:
             wait_for_deploy(client, args)
 

@@ -11,8 +11,6 @@ import sys
 from awscli.customizations.codedeploy.push import Push
 from termcolor import colored
 
-from awscodedeploy.revision import make_revision
-
 
 @contextmanager
 def capture_stdout():
@@ -42,7 +40,7 @@ def push(profile, args, revision):
         colored(args.bucket, "green"),
     ))
 
-    with capture_stdout() as capture, make_revision(revision) as revision_dir:
+    with capture_stdout() as capture, revision.make() as revision_dir:
         push_command = Push(profile.session)
         # simulate CLI args and global args
         push_command([
@@ -57,6 +55,7 @@ def push(profile, args, revision):
         ))
     
         result = capture.getvalue()
+        # Note that the push command returns the next instructions as an AWS CLI call. Parse it.
         etag = search('eTag="([a-f0-9]+)"', result).group(1)
 
     logger.info("[{}] Generated revision eTag: {}".format(
@@ -64,14 +63,10 @@ def push(profile, args, revision):
         colored(etag, "green"),
     ))
 
-    if args.no_deploy:
-        # The push command returns the next instructions
-        logger.info(result)
-
     return etag
 
 
-def deploy(profile, client, args, etag):
+def deploy(profile, client, args):
     """
     Run "aws deploy create-deployment" (or the botocore equivalent).
 
@@ -90,15 +85,19 @@ def deploy(profile, client, args, etag):
         "deploymentConfigName": args.deployment_config,
         "deploymentGroupName": args.deployment_name,
         "description": args.description,
+        # If the previous revision didn't have an ApplicationStop script,
+        # the current script will fail every time if it attempts to process this event
+        # because the script of the last successful deploy is used, not the new one.
+        "ignoreApplicationStopFailures": True,
         "revision": {
             "revisionType": "S3",
             "s3Location":  {
                 "bucket": args.bucket,
                 "key": "{}.zip".format(args.deployment_name),
                 "bundleType": "zip",
-                "eTag": etag,
+                "eTag": args.etag,
             }
-        }
+        },
     })
 
     deployment_id = result["deploymentId"]
