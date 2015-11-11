@@ -30,7 +30,11 @@ Use `pip`:
 
 The most basic usage generates the equivalent of a "hello world" revision and deploys it:
 
-    aws-code-deploy --application-name <application-name> --deployment-name <deployment-name> --description <description> --hello-world
+    aws-code-deploy \
+	  --application-name <application-name> \
+	  --deployment-name <deployment-name> \
+	  --description <description> \
+	  --hello-world
 
 Use `--help` for other options.
 
