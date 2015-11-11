@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from argparse import ArgumentParser, FileType
+from getpass import getuser
 from logging import basicConfig, getLogger
 from os import environ
 
@@ -19,6 +20,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
         "--application-name",
+        "-a",
         required=True,
         help="CodeDeploy application name",
     )
@@ -33,11 +35,13 @@ def parse_args():
     )
     parser.add_argument(
         "--deployment-name",
+        "-d",
         required=True,
         help="CodeDeploy deployment name",
     )
     parser.add_argument(
         "--description",
+        required=False,
         help="Description of this deployment"
     )
     parser.add_argument(
@@ -95,8 +99,10 @@ def parse_args():
 
     args = parser.parse_args()
 
-    if not args.description and not args.deployment_id:
-        parser.error("One of --description or --deployment-id is required.")
+    if not args.description:
+        args.description = "Deployed by {} via aws-code-deploy".format(
+            getuser(),
+        )
 
     if not args.profile:
         parser.error("One of --profile or AWS_PROFILE is required.")

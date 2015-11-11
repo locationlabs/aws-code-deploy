@@ -33,7 +33,6 @@ The most basic usage generates the equivalent of a "hello world" revision and de
     aws-code-deploy \
 	  --application-name <application-name> \
 	  --deployment-name <deployment-name> \
-	  --description <description> \
 	  --hello-world
 
 Use `--help` for other options.
