@@ -45,7 +45,11 @@ def push(profile, args, revision):
         # simulate CLI args and global args
         push_command([
             "--application-name", args.application_name,
-            "--s3-location", "s3://{}/{}.zip".format(args.bucket, args.deployment_name),
+            "--s3-location", "s3://{}/{}/{}.zip".format(
+                args.bucket,
+                args.application_name,
+                args.deployment_name,
+            ),
             "--ignore-hidden-files",
             "--source", revision_dir,
         ], Namespace(
@@ -93,7 +97,10 @@ def deploy(profile, client, args):
             "revisionType": "S3",
             "s3Location":  {
                 "bucket": args.bucket,
-                "key": "{}.zip".format(args.deployment_name),
+                "key": "{}/{}.zip".format(
+                    args.application_name,
+                    args.deployment_name,
+                ),
                 "bundleType": "zip",
                 "eTag": args.etag,
             }
