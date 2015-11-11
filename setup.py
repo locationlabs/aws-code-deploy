@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-__version__ = "1.8"
+__version__ = "1.0"
 
 setup(
     name="awscodedeploy",
