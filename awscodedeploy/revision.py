@@ -212,7 +212,7 @@ class DockerComposeRevision(Revision):
                 #!/bin/bash
 
                 cd /etc/docker-compose/{}
-                docker-compose up -d
+                docker-compose run --rm
                 """.format(self.deployment_name)),
             ),
         ]
