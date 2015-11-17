@@ -151,11 +151,19 @@ class HelloWorldRevision(Revision):
 
 class DockerComposeRevision(Revision):
     """
-    Revision that uses Docker Compose.
+    Revision that uses Docker Compose. Currently only supports compose files
+    with a single service.
     """
-    def __init__(self, deployment_name, compose_file):
+    def __init__(self, deployment_name, compose_file, timeout):
         self.deployment_name = deployment_name
         self.compose_data = load(compose_file)
+        self.timeout = timeout
+
+        # validate compose data has only 1 service.
+        if len(self.compose_data) != 1:
+            raise Exception(
+                "DockerComposeRevision only supports compose files with a single service"
+            )
 
     @property
     def images(self):
@@ -167,6 +175,13 @@ class DockerComposeRevision(Revision):
             for name, container in self.compose_data.items()
             if "image" in container
         ])
+
+    @property
+    def services(self):
+        """
+        Return the list of services from the compose data.
+        """
+        return [name for name, _ in self.compose_data.items()]
 
     @property
     def hooks(self):
@@ -189,6 +204,7 @@ class DockerComposeRevision(Revision):
                     "test -r docker-compose.yml && docker-compose rm -f || /bin/true",
                     "",
                 ]),
+                timeout=self.timeout,
             ),
             Hook(
                 event=BEFORE_INSTALL,
@@ -204,6 +220,7 @@ class DockerComposeRevision(Revision):
                 ] + [
                     "",
                 ]),
+                timeout=self.timeout,
             ),
             Hook(
                 event=APPLICATION_START,
@@ -212,8 +229,10 @@ class DockerComposeRevision(Revision):
                 #!/bin/bash
 
                 cd /etc/docker-compose/{}
-                docker-compose run --rm
-                """.format(self.deployment_name)),
+                docker-compose run --rm {}
+                """.format(self.deployment_name,
+                           self.services[0])),
+                timeout=self.timeout,
             ),
         ]
 
