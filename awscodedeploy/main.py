@@ -91,6 +91,12 @@ def parse_args():
         help="Set the poll loop's sleep timeout",
     )
     parser.add_argument(
+        "--step-timeout",
+        type=int,
+        default=300,
+        help="Set the timeout for each step (ApplicationStop, Install, etc)"
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="count",
@@ -130,6 +136,7 @@ def choose_revision(args):
         return DockerComposeRevision(
             deployment_name=args.deployment_name,
             compose_file=args.docker_compose,
+            timeout=args.step_timeout,
         )
     raise Exception("Unsupported revision")
 
