@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 
 from awscodedeploy.deploy import push, deploy
 from awscodedeploy.revision import HelloWorldRevision, DockerComposeRevision
-from awscodedeploy.wait import wait_for_deploy
+from awscodedeploy.wait import FailedDeploymentException, wait_for_deploy
 
 
 def parse_args():
@@ -171,6 +171,6 @@ def main():
             wait_for_deploy(client, args)
 
         return 0
-    except ClientError as error:
+    except (ClientError, FailedDeploymentException) as error:
         logger.error(error)
         return 1

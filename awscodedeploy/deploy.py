@@ -57,7 +57,7 @@ def push(profile, args, revision):
             endpoint_url=None,
             verify_ssl=True,
         ))
-    
+
         result = capture.getvalue()
         # Note that the push command returns the next instructions as an AWS CLI call. Parse it.
         etag = search('eTag="([a-f0-9]+)"', result).group(1)
@@ -125,6 +125,5 @@ def deploy(profile, client, args):
         colored("deploy", "cyan"),
         colored(url, "green"),
     ))
-        
-    return deployment_id
 
+    return deployment_id
