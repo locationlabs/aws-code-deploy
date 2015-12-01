@@ -138,7 +138,7 @@ class HelloWorldRevision(Revision):
                 name="echo_hello_world",
                 content=dedent("""\
                 #!/bin/bash
-                
+
                 echo hello world
                 """),
             ),

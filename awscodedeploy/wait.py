@@ -8,6 +8,10 @@ from botocore.exceptions import ClientError
 from termcolor import colored
 
 
+class FailedDeploymentException(Exception):
+    pass
+
+
 def get_deployment(client, args):
     deployment = client.get_deployment(**{
         "deploymentId": args.deployment_id,
@@ -133,3 +137,6 @@ def wait_for_deploy(client, args):
                 if instance_event["lifecycleEventName"] not in instances_seen[instance_id]:
                     instances_seen[instance_id].add(instance_event["lifecycleEventName"])
                     print_instance_event(args, instance_id, instance_event)
+
+    if overview["Failed"]:
+        raise FailedDeploymentException
